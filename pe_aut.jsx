@@ -1148,7 +1148,7 @@ export default function App() {
 
                             {tab === 'vivienda' && (
                                 <div className="animate-in fade-in duration-700">
-                                    <HousingAnalysis data={data} anchorYear={selectedYear} trendContextData={trendContextData} selectedMonths={selectedMonths} onMonthToggle={(m) => setSelectedMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [m])} comparisonLabel={comparisonLabel} momLabel={momLabel} calculateVariation={calculateVariation} />
+                                    <HousingAnalysis data={data} anchorYear={selectedYear} trendContextData={trendContextData} selectedMonths={selectedMonths} onMonthToggle={(m) => setSelectedMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [m])} comparisonLabel={comparisonLabel} seqLabel={seqLabel} calculateVariation={calculateVariation} />
                                 </div>
                             )}
                         </div>
@@ -1159,7 +1159,7 @@ export default function App() {
     );
 }
 
-const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, onMonthToggle, comparisonLabel, momLabel, calculateVariation }) => {
+const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, onMonthToggle, comparisonLabel, seqLabel, calculateVariation }) => {
     const [isCumulative, setIsCumulative] = useState(false); // Estado para el botón acumulado
 
     // CAMBIO: Filtro duro por "Habitacional" para toda esta pestaña
@@ -1171,7 +1171,7 @@ const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, o
         const preYoY = pyData.filter(d => monthsToCompare.has(d.month)).reduce((a, c) => a + (c.houses || 0), 0);
         // También aplicamos filtro "Habitacional" al secuencial
         let preSeq = 0; if (selectedMonths.length === 1) { const m = selectedMonths[0]; const tm = m === 1 ? 12 : m - 1; const ty = m === 1 ? String(parseInt(anchorYear) - 1) : String(anchorYear); preSeq = data.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && d.year === ty && d.month === tm).reduce((a, c) => a + (c.houses || 0), 0); }
-        return { cur: curVal, pyoy: preYoY, trend: calculateVariation(curVal, preYoY), momTrend: (selectedMonths.length === 1) ? calculateVariation(curVal, preSeq) : null };
+        return { cur: curVal, pyoy: preYoY, trend: calculateVariation(curVal, preYoY), seqTrend: (selectedMonths.length === 1) ? calculateVariation(curVal, preSeq) : null };
     }, [current, pyData, selectedMonths, calculateVariation, data, anchorYear]);
 
     // Chart Data con lógica acumulativa
