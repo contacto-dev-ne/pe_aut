@@ -566,6 +566,7 @@ export default function App() {
     const [selectedQuarters, setSelectedQuarters] = useState([]);
     const [selectedPisos, setSelectedPisos] = useState([]);
     const [selectedMonths, setSelectedMonths] = useState([]);
+    const [selectedComunas, setSelectedComunas] = useState([]);
     const [mapAnalyzedVar, setMapAnalyzedVar] = useState('permits');
     // State for permits chart mode
     const [isPermitsCumulative, setIsPermitsCumulative] = useState(false);
@@ -691,7 +692,7 @@ export default function App() {
             sourceData = data.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional');
         }
 
-        if (!sourceData.length) return { years: [], regions: [], usos: [], descriptions: [], tramos: [], tramosPermiso: [], provincias: [], quarters: Object.values(ROMAN_QUARTERS), pisos: [], tipos: [] };
+        if (!sourceData.length) return { years: [], regions: [], usos: [], descriptions: [], tramos: [], tramosPermiso: [], provincias: [], quarters: Object.values(ROMAN_QUARTERS), pisos: [], tipos: [], comunas: [] };
 
         const getFiltered = (exclude, current) => {
             let filtered = sourceData;
@@ -708,6 +709,7 @@ export default function App() {
                     if (key === 'tipo' && val.length > 0 && tab !== 'vivienda') filtered = filtered.filter(d => val.includes(d.tipo));
                     if (key === 'tramoM2' && val.length > 0) filtered = filtered.filter(d => val.includes(d.tramoM2));
                     if (key === 'tramoPermiso' && val.length > 0) filtered = filtered.filter(d => val.includes(d.tramoPermiso));
+                    if (key === 'comuna' && val.length > 0) filtered = filtered.filter(d => val.includes(d.comuna));
 
                     if (key === 'month' && val.length > 0) filtered = filtered.filter(d => val.includes(d.month));
                 }
@@ -726,7 +728,8 @@ export default function App() {
             tipo: selectedTipos,
             tramoM2: selectedTramos,
             tramoPermiso: selectedTramoPermiso,
-            month: selectedMonths
+            month: selectedMonths,
+            comuna: selectedComunas
         };
 
         return {
@@ -739,9 +742,10 @@ export default function App() {
             tipos: [...new Set(getFiltered('tipo', current).map(d => d.tipo))].sort(),
             pisos: [...new Set(getFiltered('tramoPisos', current).map(d => d.tramoPisos))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })),
             quarters: [...new Set(getFiltered('quarter', current).map(d => d.quarter))],
-            provincias: [...new Set(getFiltered('provincia', current).map(d => d.provincia))].sort()
+            provincias: [...new Set(getFiltered('provincia', current).map(d => d.provincia))].sort(),
+            comunas: [...new Set(getFiltered('comuna', current).map(d => d.comuna))].sort()
         };
-    }, [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedMonths, tab]);
+    }, [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedMonths, selectedComunas, tab]);
 
     const filteredData = useMemo(() => data.filter(d => {
         const mA = !selectedYear || d.year === selectedYear;
@@ -755,9 +759,10 @@ export default function App() {
         const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
         const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
         const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
+        const mC = selectedComunas.length === 0 || selectedComunas.includes(d.comuna);
 
-        return mA && mM && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
-    }), [data, selectedYear, selectedMonths, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
+        return mA && mM && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp && mC;
+    }), [data, selectedYear, selectedMonths, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedComunas]);
 
     const trendContextData = useMemo(() => data.filter(d => {
         const mA = !selectedYear || d.year === selectedYear;
@@ -770,8 +775,9 @@ export default function App() {
         const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
         const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
         const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
-        return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
-    }), [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
+        const mC = selectedComunas.length === 0 || selectedComunas.includes(d.comuna);
+        return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp && mC;
+    }), [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedComunas]);
 
     const prevTrendContextData = useMemo(() => {
         if (!selectedYear) return [];
@@ -787,9 +793,10 @@ export default function App() {
             const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
             const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
             const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
-            return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
+            const mC = selectedComunas.length === 0 || selectedComunas.includes(d.comuna);
+            return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp && mC;
         });
-    }, [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
+    }, [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedComunas]);
 
     const { prevFilteredData, comparisonLabel, seqFilteredData, seqLabel } = useMemo(() => {
         if (!selectedYear || data.length === 0) return { prevFilteredData: [], comparisonLabel: "", seqFilteredData: [], seqLabel: "" };
@@ -822,7 +829,8 @@ export default function App() {
                 const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
                 const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
                 const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
-                return mA && mM && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
+                const mC = selectedComunas.length === 0 || selectedComunas.includes(d.comuna);
+                return mA && mM && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp && mC;
             });
         } else if (selectedQuarters.length === 1) {
             // Caso: Selección de un trimestre específico (QoQ)
@@ -843,12 +851,13 @@ export default function App() {
                 const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
                 const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
                 const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
-                return mA && mQ && mR && mU && mD && mP && mPi && mT && mTr && mTp;
+                const mC = selectedComunas.length === 0 || selectedComunas.includes(d.comuna);
+                return mA && mQ && mR && mU && mD && mP && mPi && mT && mTr && mTp && mC;
             });
         }
 
         return { prevFilteredData: py, comparisonLabel: labelYoY, seqFilteredData: ps, seqLabel: sl };
-    }, [data, selectedYear, selectedMonths, selectedQuarters, filteredData, selectedRegions, prevTrendContextData, selectedUsos, selectedDescriptions, selectedProvincias, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
+    }, [data, selectedYear, selectedMonths, selectedQuarters, filteredData, selectedRegions, prevTrendContextData, selectedUsos, selectedDescriptions, selectedProvincias, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso, selectedComunas]);
 
     const metrics = useMemo(() => {
         const calc = (dataset) => {
@@ -990,6 +999,11 @@ export default function App() {
                                         <DropdownSelect label="REGIÓN" options={filterOptions.regions} selected={selectedRegions} onChange={setSelectedRegions} />
                                         {/* CAMBIO: Se muestra Provincia en lugar de Comuna */}
                                         <DropdownSelect label="Provincia" options={filterOptions.provincias} selected={selectedProvincias} onChange={setSelectedProvincias} />
+
+                                        {/* NUEVO: Segmentador por Comuna (solo en Análisis y Vivienda) */}
+                                        {(tab === 'analisis' || tab === 'vivienda') && (
+                                            <DropdownSelect label="Comuna" options={filterOptions.comunas} selected={selectedComunas} onChange={setSelectedComunas} />
+                                        )}
 
                                         {tab === 'vivienda' ? (
                                             <DropdownSelect label="Tipo de vivienda" options={filterOptions.descriptions} selected={selectedDescriptions} onChange={setSelectedDescriptions} disabled={filterOptions.descriptions.length === 0} />
