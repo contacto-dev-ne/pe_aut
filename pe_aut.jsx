@@ -764,21 +764,38 @@ export default function App() {
         return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
     }), [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
 
-    const { prevFilteredData, comparisonLabel, momFilteredData, momLabel } = useMemo(() => {
-        if (!selectedYear || data.length === 0) return { prevFilteredData: [], comparisonLabel: "", momFilteredData: [], momLabel: "" };
+    const { prevFilteredData, comparisonLabel, seqFilteredData, seqLabel } = useMemo(() => {
+        if (!selectedYear || data.length === 0) return { prevFilteredData: [], comparisonLabel: "", seqFilteredData: [], seqLabel: "" };
         const curYearNum = parseInt(selectedYear);
         const lastYear = String(curYearNum - 1);
         const months = selectedMonths.length > 0 ? new Set(selectedMonths) : new Set(filteredData.map(d => d.month));
-        const labelYoY = selectedMonths.length === 1 ? `vs ${MONTHS_ES[selectedMonths[0] - 1]} ${lastYear}` : `vs ${lastYear}`;
+
+        // 1. Comparativa Interanual (YoY) - Siempre presente
+        const labelYoY = selectedMonths.length === 1 ? `vs ${MONTHS_ES[selectedMonths[0] - 1]} ${lastYear}` :
+            selectedQuarters.length === 1 ? `vs Trim. ${selectedQuarters[0]} ${lastYear}` : `vs ${lastYear}`;
         const py = data.filter(d => d.year === lastYear && months.has(d.month) && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
-        let pm = []; let ml = "";
+
+        let ps = []; let sl = "";
+
+        // 2. Comparativa Secuencial (Mes anterior o Trimestre anterior)
         if (selectedMonths.length === 1) {
+            // Caso: Selección de un mes específico
             const m = selectedMonths[0]; const tm = m === 1 ? 12 : m - 1; const ty = m === 1 ? String(curYearNum - 1) : String(curYearNum);
-            ml = `vs ${MONTHS_ES[tm - 1]} ${ty}`;
-            pm = data.filter(d => d.year === ty && d.month === tm && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
+            sl = `vs ${MONTHS_ES[tm - 1]} ${ty}`;
+            ps = data.filter(d => d.year === ty && d.month === tm && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
+        } else if (selectedQuarters.length === 1) {
+            // Caso: Selección de un trimestre específico (QoQ)
+            const q = selectedQuarters[0];
+            const qNum = INV_ROMAN_QUARTERS[q];
+            const tqNum = qNum === 1 ? 4 : qNum - 1;
+            const tq = ROMAN_QUARTERS[String(tqNum)];
+            const ty = qNum === 1 ? String(curYearNum - 1) : String(curYearNum);
+            sl = `vs Trim. ${tq} ${ty}`;
+            ps = data.filter(d => d.year === ty && d.quarter === tq && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
         }
-        return { prevFilteredData: py, comparisonLabel: labelYoY, momFilteredData: pm, momLabel: ml };
-    }, [data, selectedYear, selectedMonths, filteredData, selectedRegions]);
+
+        return { prevFilteredData: py, comparisonLabel: labelYoY, seqFilteredData: ps, seqLabel: sl };
+    }, [data, selectedYear, selectedMonths, selectedQuarters, filteredData, selectedRegions]);
 
     const metrics = useMemo(() => {
         const calc = (dataset) => {
@@ -788,14 +805,14 @@ export default function App() {
             const h = vr.reduce((acc, c) => acc + (c.houses || 0), 0);
             return { p, s, h, sh: h > 0 ? vr.reduce((acc, c) => acc + c.surface, 0) / h : 0 };
         };
-        const c = calc(filteredData); const py = calc(prevFilteredData); const pm = calc(momFilteredData);
+        const c = calc(filteredData); const py = calc(prevFilteredData); const ps = calc(seqFilteredData);
         return {
-            permits: { val: c.p, trend: calculateVariation(c.p, py.p), momTrend: calculateVariation(c.p, pm.p) },
-            surface: { val: c.s, trend: calculateVariation(c.s, py.s), momTrend: calculateVariation(c.s, pm.s) },
-            houses: { val: c.h, trend: calculateVariation(c.h, py.h), momTrend: calculateVariation(c.h, pm.h) },
-            surfHouse: { val: c.sh, trend: calculateVariation(c.sh, py.sh), momTrend: calculateVariation(c.sh, pm.sh) }
+            permits: { val: c.p, trend: calculateVariation(c.p, py.p), seqTrend: calculateVariation(c.p, ps.p) },
+            surface: { val: c.s, trend: calculateVariation(c.s, py.s), seqTrend: calculateVariation(c.s, ps.s) },
+            houses: { val: c.h, trend: calculateVariation(c.h, py.h), seqTrend: calculateVariation(c.h, ps.h) },
+            surfHouse: { val: c.sh, trend: calculateVariation(c.sh, py.sh), seqTrend: calculateVariation(c.sh, ps.sh) }
         };
-    }, [filteredData, prevFilteredData, momFilteredData]);
+    }, [filteredData, prevFilteredData, seqFilteredData]);
 
     const mapDataGrouped = useMemo(() => {
         const all = [...new Set(data.map(d => d.destino))].sort();
@@ -971,10 +988,10 @@ export default function App() {
                             {showKpis && (
                                 <div className="p-6 bg-slate-50/30 animate-in fade-in slide-in-from-top-1 duration-200 rounded-b-2xl">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <KPI_Card title="Permisos" value={metrics.permits.val} trend={metrics.permits.trend} comparisonLabel={comparisonLabel} momTrend={metrics.permits.momTrend} momLabel={momLabel} icon={Layers} />
-                                        <KPI_Card title="Superficie (m²)" value={metrics.surface.val} trend={metrics.surface.trend} comparisonLabel={comparisonLabel} momTrend={metrics.surface.momTrend} momLabel={momLabel} icon={TrendingUp} />
-                                        <KPI_Card title="Viviendas" value={metrics.houses.val} trend={metrics.houses.trend} comparisonLabel={comparisonLabel} momTrend={metrics.houses.momTrend} momLabel={momLabel} icon={Home} />
-                                        <KPI_Card title="m²/vivienda" value={metrics.surfHouse.val} trend={metrics.surfHouse.trend} comparisonLabel={comparisonLabel} momTrend={metrics.surfHouse.momTrend} momLabel={momLabel} unit="m²/viv" icon={Ruler} />
+                                        <KPI_Card title="Permisos" value={metrics.permits.val} trend={metrics.permits.trend} comparisonLabel={comparisonLabel} momTrend={metrics.permits.seqTrend} momLabel={seqLabel} icon={Layers} />
+                                        <KPI_Card title="Superficie (m²)" value={metrics.surface.val} trend={metrics.surface.trend} comparisonLabel={comparisonLabel} momTrend={metrics.surface.seqTrend} momLabel={seqLabel} icon={TrendingUp} />
+                                        <KPI_Card title="Viviendas" value={metrics.houses.val} trend={metrics.houses.trend} comparisonLabel={comparisonLabel} momTrend={metrics.houses.seqTrend} momLabel={seqLabel} icon={Home} />
+                                        <KPI_Card title="m²/vivienda" value={metrics.surfHouse.val} trend={metrics.surfHouse.trend} comparisonLabel={comparisonLabel} momTrend={metrics.surfHouse.seqTrend} momLabel={seqLabel} unit="m²/viv" icon={Ruler} />
                                     </div>
                                 </div>
                             )}
