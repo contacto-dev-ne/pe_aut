@@ -998,9 +998,9 @@ export default function App() {
                                             }
                                         >
                                             <ResponsiveContainer width="100%" height={350}>
-                                                <BarChart data={permitsChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
+                                                <BarChart data={permitsChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                    <XAxis dataKey="name" fontSize={9} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} />
+                                                    <XAxis dataKey="name" fontSize={8} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} angle={-45} textAnchor="end" height={50} />
                                                     <YAxis fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
                                                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none' }} />
                                                     {uniqueDestinations.map((destino, index) => (
@@ -1023,9 +1023,9 @@ export default function App() {
                                             }
                                         >
                                             <ResponsiveContainer width="100%" height={350}>
-                                                <ComposedChart data={surfaceChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
+                                                <ComposedChart data={surfaceChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                    <XAxis dataKey="name" fontSize={9} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} />
+                                                    <XAxis dataKey="name" fontSize={8} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} angle={-45} textAnchor="end" height={50} />
                                                     <YAxis yAxisId="left" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
                                                     <YAxis yAxisId="right" orientation="right" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
                                                     <Tooltip formatter={(v) => v.toLocaleString('es-CL')} />
@@ -1240,7 +1240,7 @@ const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, o
                     <ResponsiveContainer width="100%" height={350}>
                         <LineChart data={chartData} onClick={(e) => e && e.activeLabel && onMonthToggle(MONTHS_ES.indexOf(e.activeLabel) + 1)} style={{ cursor: 'pointer' }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="name" fontSize={9} axisLine={false} tickLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} />
+                            <XAxis dataKey="name" fontSize={8} axisLine={false} tickLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} angle={-45} textAnchor="end" height={50} />
                             <YAxis fontSize={9} axisLine={false} tickLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
                             <Tooltip formatter={(v) => v.toLocaleString('es-CL')} contentStyle={{ borderRadius: '16px', border: 'none' }} />
                             <Legend iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
