@@ -969,6 +969,16 @@ export default function App() {
                                         {tab !== 'vivienda' && (
                                             <DropdownSelect label="Tipo" options={filterOptions.tipos} selected={selectedTipos} onChange={setSelectedTipos} disabled={filterOptions.tipos.length === 0} />
                                         )}
+
+                                        {tab === 'mapa' && (
+                                            <DropdownSelect
+                                                label="Mes"
+                                                options={MONTHS_ES.map((m, i) => ({ label: m, value: i + 1 }))}
+                                                selected={selectedMonths}
+                                                onChange={setSelectedMonths}
+                                                isObjectOptions
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             )}
