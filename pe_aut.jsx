@@ -12,11 +12,8 @@ import {
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN ---
-// NOTA PARA GITHUB PAGES: Descomenta la siguiente línea y comenta la de abajo cuando configures el Secret VITE_SPREADSHEET_ID
-// const SPREADSHEET_ID = import.meta.env?.VITE_SPREADSHEET_ID || '15GTu0PMusrwjvLU4B9tTIsLDOyhGPHoE2I1vHIgyfBQ';
-
-// ID fijo para asegurar funcionamiento en este entorno de vista previa
-const SPREADSHEET_ID = '15GTu0PMusrwjvLU4B9tTIsLDOyhGPHoE2I1vHIgyfBQ';
+// El ID de la planilla se obtiene de las variables de entorno para mayor seguridad
+const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const SHEET_NAME = 'BD';
 const LOGO_URL = 'https://cchc.cl/documents/431409/0/logoCChC.png/002fea99-2039-beec-02a7-a92335532d6f?t=1695346405910';
 
