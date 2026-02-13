@@ -773,6 +773,24 @@ export default function App() {
         return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
     }), [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
 
+    const prevTrendContextData = useMemo(() => {
+        if (!selectedYear) return [];
+        const lastYear = String(parseInt(selectedYear) - 1);
+        return data.filter(d => {
+            const mA = d.year === lastYear;
+            const mR = selectedRegions.length === 0 || selectedRegions.includes(d.region1);
+            const mU = selectedUsos.length === 0 || selectedUsos.includes(d.uso);
+            const mD = selectedDescriptions.length === 0 || selectedDescriptions.includes(d.descripcion);
+            const mP = selectedProvincias.length === 0 || selectedProvincias.includes(d.provincia);
+            const mQ = selectedQuarters.length === 0 || selectedQuarters.includes(d.quarter);
+            const mPi = selectedPisos.length === 0 || selectedPisos.includes(d.tramoPisos);
+            const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
+            const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
+            const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
+            return mA && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
+        });
+    }, [data, selectedYear, selectedRegions, selectedUsos, selectedDescriptions, selectedProvincias, selectedQuarters, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
+
     const { prevFilteredData, comparisonLabel, seqFilteredData, seqLabel } = useMemo(() => {
         if (!selectedYear || data.length === 0) return { prevFilteredData: [], comparisonLabel: "", seqFilteredData: [], seqLabel: "" };
         const curYearNum = parseInt(selectedYear);
@@ -782,7 +800,7 @@ export default function App() {
         // 1. Comparativa Interanual (YoY) - Siempre presente
         const labelYoY = selectedMonths.length === 1 ? `vs ${MONTHS_ES[selectedMonths[0] - 1]} ${lastYear}` :
             selectedQuarters.length === 1 ? `vs Trim. ${selectedQuarters[0]} ${lastYear}` : `vs ${lastYear}`;
-        const py = data.filter(d => d.year === lastYear && months.has(d.month) && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
+        const py = prevTrendContextData.filter(d => months.has(d.month));
 
         let ps = []; let sl = "";
 
@@ -791,7 +809,21 @@ export default function App() {
             // Caso: Selección de un mes específico
             const m = selectedMonths[0]; const tm = m === 1 ? 12 : m - 1; const ty = m === 1 ? String(curYearNum - 1) : String(curYearNum);
             sl = `vs ${MONTHS_ES[tm - 1]} ${ty}`;
-            ps = data.filter(d => d.year === ty && d.month === tm && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
+            // Aplicar todos los filtros al secuencial también
+            ps = data.filter(d => {
+                const mA = d.year === ty;
+                const mM = d.month === tm;
+                const mR = selectedRegions.length === 0 || selectedRegions.includes(d.region1);
+                const mU = selectedUsos.length === 0 || selectedUsos.includes(d.uso);
+                const mD = selectedDescriptions.length === 0 || selectedDescriptions.includes(d.descripcion);
+                const mP = selectedProvincias.length === 0 || selectedProvincias.includes(d.provincia);
+                const mQ = selectedQuarters.length === 0 || selectedQuarters.includes(d.quarter);
+                const mPi = selectedPisos.length === 0 || selectedPisos.includes(d.tramoPisos);
+                const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
+                const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
+                const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
+                return mA && mM && mR && mU && mD && mP && mQ && mPi && mT && mTr && mTp;
+            });
         } else if (selectedQuarters.length === 1) {
             // Caso: Selección de un trimestre específico (QoQ)
             const q = selectedQuarters[0];
@@ -800,11 +832,23 @@ export default function App() {
             const tq = ROMAN_QUARTERS[String(tqNum)];
             const ty = qNum === 1 ? String(curYearNum - 1) : String(curYearNum);
             sl = `vs Trim. ${tq} ${ty}`;
-            ps = data.filter(d => d.year === ty && d.quarter === tq && (selectedRegions.length === 0 || selectedRegions.includes(d.region1)));
+            ps = data.filter(d => {
+                const mA = d.year === ty;
+                const mQ = d.quarter === tq;
+                const mR = selectedRegions.length === 0 || selectedRegions.includes(d.region1);
+                const mU = selectedUsos.length === 0 || selectedUsos.includes(d.uso);
+                const mD = selectedDescriptions.length === 0 || selectedDescriptions.includes(d.descripcion);
+                const mP = selectedProvincias.length === 0 || selectedProvincias.includes(d.provincia);
+                const mPi = selectedPisos.length === 0 || selectedPisos.includes(d.tramoPisos);
+                const mT = selectedTipos.length === 0 || selectedTipos.includes(d.tipo);
+                const mTr = selectedTramos.length === 0 || selectedTramos.includes(d.tramoM2);
+                const mTp = selectedTramoPermiso.length === 0 || selectedTramoPermiso.includes(d.tramoPermiso);
+                return mA && mQ && mR && mU && mD && mP && mPi && mT && mTr && mTp;
+            });
         }
 
         return { prevFilteredData: py, comparisonLabel: labelYoY, seqFilteredData: ps, seqLabel: sl };
-    }, [data, selectedYear, selectedMonths, selectedQuarters, filteredData, selectedRegions]);
+    }, [data, selectedYear, selectedMonths, selectedQuarters, filteredData, selectedRegions, prevTrendContextData, selectedUsos, selectedDescriptions, selectedProvincias, selectedPisos, selectedTipos, selectedTramos, selectedTramoPermiso]);
 
     const metrics = useMemo(() => {
         const calc = (dataset) => {
@@ -1148,7 +1192,7 @@ export default function App() {
 
                             {tab === 'vivienda' && (
                                 <div className="animate-in fade-in duration-700">
-                                    <HousingAnalysis data={data} anchorYear={selectedYear} trendContextData={trendContextData} selectedMonths={selectedMonths} onMonthToggle={(m) => setSelectedMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [m])} comparisonLabel={comparisonLabel} seqLabel={seqLabel} calculateVariation={calculateVariation} />
+                                    <HousingAnalysis data={data} anchorYear={selectedYear} trendContextData={trendContextData} prevTrendContextData={prevTrendContextData} selectedMonths={selectedMonths} onMonthToggle={(m) => setSelectedMonths(prev => prev.includes(m) ? prev.filter(x => x !== m) : [m])} comparisonLabel={comparisonLabel} seqLabel={seqLabel} calculateVariation={calculateVariation} />
                                 </div>
                             )}
                         </div>
@@ -1159,12 +1203,12 @@ export default function App() {
     );
 }
 
-const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, onMonthToggle, comparisonLabel, seqLabel, calculateVariation }) => {
+const HousingAnalysis = ({ data, anchorYear, trendContextData, prevTrendContextData, selectedMonths, onMonthToggle, comparisonLabel, seqLabel, calculateVariation }) => {
     const [isCumulative, setIsCumulative] = useState(false); // Estado para el botón acumulado
 
-    // CAMBIO: Filtro duro por "Habitacional" para toda esta pestaña
+    // CAMBIO: Ahora el año anterior usa prevTrendContextData que ya tiene aplicados los filtros de Segmentación
     const current = useMemo(() => trendContextData.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && (selectedMonths.length === 0 || selectedMonths.includes(d.month))), [trendContextData, selectedMonths]);
-    const pyData = useMemo(() => data.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && String(d.year) === String(parseInt(anchorYear) - 1)), [data, anchorYear]);
+    const pyData = useMemo(() => prevTrendContextData.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional'), [prevTrendContextData]);
 
     const stats = useMemo(() => {
         const curVal = current.reduce((a, c) => a + (c.houses || 0), 0); const monthsToCompare = selectedMonths.length > 0 ? new Set(selectedMonths) : new Set(current.map(d => d.month));
@@ -1184,7 +1228,7 @@ const HousingAnalysis = ({ data, anchorYear, trendContextData, selectedMonths, o
 
             // Calcular valores mensuales con filtro Habitacional
             const valActual = trendContextData.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && d.month === mNum).reduce((a, c) => a + (c.houses || 0), 0);
-            const valAnterior = data.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && String(d.year) === String(parseInt(anchorYear) - 1) && d.month === mNum).reduce((a, c) => a + (c.houses || 0), 0);
+            const valAnterior = prevTrendContextData.filter(d => d.destino === 'Vivienda' && d.tipo === 'Habitacional' && d.month === mNum).reduce((a, c) => a + (c.houses || 0), 0);
 
             // Actualizar acumuladores
             accActual += valActual;
