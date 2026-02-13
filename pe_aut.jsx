@@ -1023,15 +1023,13 @@ export default function App() {
                                             }
                                         >
                                             <ResponsiveContainer width="100%" height={350}>
-                                                <ComposedChart data={surfaceChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                                <ComposedChart data={surfaceChartData} onClick={handleChartClick} style={{ cursor: 'pointer' }} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                    <XAxis dataKey="name" fontSize={8} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} angle={-45} textAnchor="end" height={50} />
-                                                    <YAxis yAxisId="left" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
-                                                    <YAxis yAxisId="right" orientation="right" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
-                                                    <Tooltip formatter={(v) => v.toLocaleString('es-CL')} />
-                                                    {/* Barras apiladas por destino */}
+                                                    <XAxis dataKey="name" fontSize={8} tickLine={false} axisLine={false} interval={0} tick={{ fill: '#64748b', fontWeight: 'bold' }} angle={-45} textAnchor="end" height={60} />
+                                                    <YAxis fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.toLocaleString('es-CL')} />
+                                                    <Tooltip formatter={(v) => v.toLocaleString('es-CL')} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                                     {uniqueDestinations.map((destino, index) => (
-                                                        <Bar yAxisId="left" key={destino} dataKey={destino} stackId="a" fill={COLOR_PALETTE[index % COLOR_PALETTE.length]} />
+                                                        <Bar key={destino} dataKey={destino} stackId="a" fill={COLOR_PALETTE[index % COLOR_PALETTE.length]} />
                                                     ))}
                                                 </ComposedChart>
                                             </ResponsiveContainer>
