@@ -367,18 +367,27 @@ const DropdownSelect = ({ label, options, selected, onChange, disabled = false, 
                                 if (label === "Trimestre") return INV_ROMAN_QUARTERS[a] - INV_ROMAN_QUARTERS[b];
                                 if (typeof a === 'number') return b - a;
                                 return a.toString().localeCompare(b);
-                            })).map((opt, idx) => (
-                                <label key={`${label}-opt-${idx}`} className="flex items-center px-2 py-2 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] transition-colors group">
-                                    <input type={isSingle ? "radio" : "checkbox"} name={label} checked={isSingle ? selected === opt : selected.includes(opt)}
-                                        onChange={() => {
-                                            if (isSingle) { onChange(opt); setIsOpen(false); }
-                                            else { if (selected.includes(opt)) onChange(selected.filter(item => item !== opt)); else onChange([...selected, opt]); }
-                                        }}
-                                        className={`mr-2 h-4 w-4 border-slate-300 text-blue-700 focus:ring-blue-600 cursor-pointer ${isSingle ? 'rounded-full' : 'rounded'}`}
-                                    />
-                                    <span className="truncate font-medium text-slate-700 group-hover:text-blue-700">{opt}</span>
-                                </label>
-                            ))}
+                            })).map((opt, idx) => {
+                                const optionLabel = typeof opt === 'object' ? opt.label : opt;
+                                const optionValue = typeof opt === 'object' ? opt.value : opt;
+                                const isChecked = isSingle ? selected === optionValue : selected.includes(optionValue);
+
+                                return (
+                                    <label key={`${label}-opt-${idx}`} className="flex items-center px-2 py-2 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] transition-colors group">
+                                        <input type={isSingle ? "radio" : "checkbox"} name={label} checked={isChecked}
+                                            onChange={() => {
+                                                if (isSingle) { onChange(optionValue); setIsOpen(false); }
+                                                else {
+                                                    if (selected.includes(optionValue)) onChange(selected.filter(item => item !== optionValue));
+                                                    else onChange([...selected, optionValue]);
+                                                }
+                                            }}
+                                            className={`mr-2 h-4 w-4 border-slate-300 text-blue-700 focus:ring-blue-600 cursor-pointer ${isSingle ? 'rounded-full' : 'rounded'}`}
+                                        />
+                                        <span className="truncate font-medium text-slate-700 group-hover:text-blue-700">{optionLabel}</span>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
                 </>
@@ -976,7 +985,6 @@ export default function App() {
                                                 options={MONTHS_ES.map((m, i) => ({ label: m, value: i + 1 }))}
                                                 selected={selectedMonths}
                                                 onChange={setSelectedMonths}
-                                                isObjectOptions
                                             />
                                         )}
                                     </div>
