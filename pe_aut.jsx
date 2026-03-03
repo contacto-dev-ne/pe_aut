@@ -585,11 +585,19 @@ export default function App() {
         const fetchData = async () => {
             setLoading(true);
             try {
+                if (!POWER_AUTOMATE_URL || POWER_AUTOMATE_URL === "undefined") {
+                    throw new Error("🚨 ERROR: Falta configurar el Secret 'VITE_POWER_AUTOMATE_URL' en GitHub.");
+                }
+
                 // Hacer el POST al webhook de Power Automate
                 const response = await fetch(POWER_AUTOMATE_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Error de red HTTP (${response.status}): No se pudo descargar el archivo.`);
+                }
 
                 // Leemos como buffer binario
                 const arrayBuffer = await response.arrayBuffer();
