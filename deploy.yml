@@ -28,7 +28,7 @@ jobs:
         run: npm run build
         env:
           # Inyecta la variable secreta configurada en GitHub Settings > Secrets
-          VITE_SPREADSHEET_ID: ${{ secrets.VITE_SPREADSHEET_ID }}
+          VITE_POWER_AUTOMATE_URL: ${{ secrets.VITE_POWER_AUTOMATE_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

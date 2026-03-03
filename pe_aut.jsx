@@ -10,11 +10,10 @@ import {
     AlertCircle, RefreshCw, CheckCircle2,
     BarChart3, Database, Globe, Search, Menu, X, Camera, Ruler, XCircle, Layout, Clock, Target, Box, PieChart as PieIcon
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 // --- CONFIGURACIÓN ---
-// El ID de la planilla se obtiene de las variables de entorno para mayor seguridad
-const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
-const SHEET_NAME = 'BD';
+const POWER_AUTOMATE_URL = import.meta.env.VITE_POWER_AUTOMATE_URL;
 const LOGO_URL = 'https://cchc.cl/documents/431409/0/logoCChC.png/002fea99-2039-beec-02a7-a92335532d6f?t=1695346405910';
 
 const CCHC_COLORS = {
@@ -586,64 +585,91 @@ export default function App() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&tq=SELECT%20*&sheet=${encodeURIComponent(SHEET_NAME)}`;
-                const response = await fetch(url);
-                const text = await response.text();
-                const jsonData = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+                // Hacer el POST al webhook de Power Automate
+                const response = await fetch(POWER_AUTOMATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
 
-                const rawHeaders = jsonData.table.cols.map(col => col.label);
+                // Leemos como buffer binario
+                const arrayBuffer = await response.arrayBuffer();
 
-                const mIdx = {
-                    comuna: getHeaderIndex(rawHeaders, ['Comuna']),
-                    codComuna: getHeaderIndex(rawHeaders, ['Código de comuna', 'Codigo de comuna', 'Código comuna', 'CUT']),
-                    provincia: getHeaderIndex(rawHeaders, ['Provincia']),
-                    trimestre: getHeaderIndex(rawHeaders, ['Trimestre']),
-                    viviendas: getHeaderIndex(rawHeaders, ['Cantidad de viviendas', 'Viviendas', 'Cant. Viviendas']),
-                    fecha: getHeaderIndex(rawHeaders, ['Fecha del permiso', 'Fecha']),
-                    destino: getHeaderIndex(rawHeaders, ['Destino']),
-                    uso: getHeaderIndex(rawHeaders, ['Uso']),
-                    descripcion: getHeaderIndex(rawHeaders, ['Descripción', 'Descripcion', 'Glosa', 'Detalle']),
-                    superficie: getHeaderIndex(rawHeaders, ['Superficie autorizada', 'Superficie']),
-                    tramoM2: getHeaderIndex(rawHeaders, ['Tramo de superficie', 'Tramo Superficie Vivienda', 'Tramo M2 Vivienda']),
-                    tramoPermiso: getHeaderIndex(rawHeaders, ['Tramo M2', 'Tramo Superficie Permiso']),
-                    region1: getHeaderIndex(rawHeaders, ['Región 1', 'Region', 'Región']),
-                    tipo: getHeaderIndex(rawHeaders, ['Tipo de edificación', 'Tipo']),
-                    tramoPisos: getHeaderIndex(rawHeaders, ['Tramo Pisos']),
-                    ubicacion: getHeaderIndex(rawHeaders, ['Ubicación', 'Ubicacion', 'Coordenadas']),
-                    comuna1: getHeaderIndex(rawHeaders, ['Comuna1', 'Comuna Completa'])
-                };
+                // Parseamos con xlsx
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0]; // Tomas la primera hoja, o puedes usar "BD" si es que siempre es BD
+                const worksheet = workbook.Sheets[firstSheetName];
 
-                const formatted = jsonData.table.rows.map((row) => {
-                    const get = (idx) => (idx !== -1 && row.c[idx] ? row.c[idx].v : null);
-                    const cleanNum = (val) => { if (val === undefined || val === null) return 0; if (typeof val === 'number') return val; let s = String(val).replace(/\./g, '').replace(',', '.'); return parseFloat(s) || 0; };
+                // Convertimos la hoja plana a JSON
+                // raw: true mantiene las fechas como números seriales (que tu lógica después limpia y parsea perfecto)
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true });
 
-                    const obj = {
-                        comuna: String(get(mIdx.comuna) || "N/A"),
-                        codComuna: String(get(mIdx.codComuna) || "0"),
-                        provincia: String(get(mIdx.provincia) || "N/A"),
-                        region1: String(get(mIdx.region1) || "N/A"),
-                        destino: String(get(mIdx.destino) || "N/A"),
-                        uso: String(get(mIdx.uso) || "Otros"),
-                        descripcion: String(get(mIdx.descripcion) || "N/A"),
-                        tipo: String(get(mIdx.tipo) || "Otros"),
-                        tramoM2: String(get(mIdx.tramoM2) || "N/A"),
-                        tramoPermiso: String(get(mIdx.tramoPermiso) || "N/A"),
-                        tramoPisos: String(get(mIdx.tramoPisos) || "N/A")
+                const formatted = jsonData.map((row) => {
+                    const getVal = (possibleKeys) => {
+                        for (const key of possibleKeys) {
+                            if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
+                                return row[key];
+                            }
+                            // Buscar ignorando espacios o mayúsculas en las llaves, por si acaso
+                            const matchingKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+                            if (matchingKey && row[matchingKey] !== undefined && row[matchingKey] !== null && row[matchingKey] !== "") {
+                                return row[matchingKey];
+                            }
+                        }
+                        return null;
                     };
 
-                    obj.surface = cleanNum(get(mIdx.superficie));
-                    const vRaw = get(mIdx.viviendas);
+                    const cleanNum = (val) => {
+                        if (val === undefined || val === null) return 0;
+                        if (typeof val === 'number') return val;
+                        let s = String(val).replace(/\./g, '').replace(',', '.');
+                        return parseFloat(s) || 0;
+                    };
+
+                    const obj = {
+                        comuna: String(getVal(['Comuna']) || "N/A"),
+                        codComuna: String(getVal(['Código de comuna', 'Codigo de comuna', 'Código comuna', 'CUT']) || "0"),
+                        provincia: String(getVal(['Provincia']) || "N/A"),
+                        region1: String(getVal(['Región 1', 'Region', 'Región']) || "N/A"),
+                        destino: String(getVal(['Destino']) || "N/A"),
+                        uso: String(getVal(['Uso']) || "Otros"),
+                        descripcion: String(getVal(['Descripción', 'Descripcion', 'Glosa', 'Detalle']) || "N/A"),
+                        tipo: String(getVal(['Tipo de edificación', 'Tipo']) || "Otros"),
+                        tramoM2: String(getVal(['Tramo de superficie', 'Tramo Superficie Vivienda', 'Tramo M2 Vivienda']) || "N/A"),
+                        tramoPermiso: String(getVal(['Tramo M2', 'Tramo Superficie Permiso']) || "N/A"),
+                        tramoPisos: String(getVal(['Tramo Pisos']) || "N/A")
+                    };
+
+                    obj.surface = cleanNum(getVal(['Superficie autorizada', 'Superficie']));
+                    const vRaw = getVal(['Cantidad de viviendas', 'Viviendas', 'Cant. Viviendas']);
                     obj.houses = vRaw ? parseInt(String(vRaw).replace(/\D/g, '')) || 0 : 0;
 
-                    const f = get(mIdx.fecha);
+                    const f = getVal(['Fecha del permiso', 'Fecha']);
                     if (f) {
-                        if (f.toString().includes('Date')) { const p = f.match(/\d+/g); obj.month = parseInt(p[1]) + 1; obj.year = String(p[0]); }
-                        else { const p = f.toString().split(/[/\-,]/); obj.month = parseInt(p[1]) || parseInt(p[0]) || 1; obj.year = String(p.length > 2 ? p[2] : (p[1] || "2024")); }
+                        const serial = Number(f);
+                        if (!isNaN(serial) && serial > 10000) {
+                            // Fecha formato número Excel (días desde 1900-01-01)
+                            const date = new Date((serial - 25569) * 86400 * 1000);
+                            obj.month = date.getUTCMonth() + 1;
+                            obj.year = String(date.getUTCFullYear());
+                        } else if (String(f).includes('Date')) {
+                            const p = String(f).match(/\d+/g);
+                            obj.month = parseInt(p[1]) + 1;
+                            obj.year = String(p[0]);
+                        } else {
+                            const strF = String(f);
+                            const p = strF.split(/[/\-,]/);
+                            if (p.length > 2) {
+                                obj.month = parseInt(p[1]) || parseInt(p[0]) || 1;
+                                obj.year = String(p[2].length === 4 ? p[2] : (p[0].length === 4 ? p[0] : "2024"));
+                            } else {
+                                obj.month = 1; obj.year = "2024";
+                            }
+                        }
                     } else { obj.month = 1; obj.year = "2024"; }
 
-                    obj.quarter = ROMAN_QUARTERS[String(get(mIdx.trimestre))] || "I";
+                    obj.quarter = ROMAN_QUARTERS[String(getVal(['Trimestre']))] || "I";
 
-                    const loc = get(mIdx.ubicacion);
+                    const loc = getVal(['Ubicación', 'Ubicacion', 'Coordenadas']);
                     let foundLat = null;
                     let foundLng = null;
 
@@ -669,6 +695,7 @@ export default function App() {
 
                     return obj;
                 });
+
                 setData(formatted);
                 const years = [...new Set(formatted.map(d => d.year).filter(y => String(y).length === 4))].sort((a, b) => b - a);
 
