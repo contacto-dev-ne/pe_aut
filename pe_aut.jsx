@@ -8,7 +8,8 @@ import {
     ChevronDown, ChevronUp, Download, Info,
     TrendingUp, Activity, Layers, Calendar,
     AlertCircle, RefreshCw, CheckCircle2,
-    BarChart3, Database, Globe, Search, Menu, X, Camera, Ruler, XCircle, Layout, Clock, Target, Box, PieChart as PieIcon
+    BarChart3, Database, Globe, Search, Menu, X, Camera, Ruler, XCircle, Layout, Clock, Target, Box, PieChart as PieIcon,
+    ArrowRight, ExternalLink, ArrowLeft
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -545,9 +546,65 @@ const LeafletMap = ({ mapData, mapAnalyzedVar, tabActive }) => {
     );
 };
 
+// --- COMPONENTE: PORTADA ---
+const LandingPage = ({ onEnter }) => {
+    return (
+        <div className="h-screen w-full bg-brand relative overflow-hidden flex flex-col items-center justify-center text-white font-sans">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob"></div>
+                <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob" style={{ animationDelay: '2000ms' }}></div>
+                <div className="absolute -bottom-32 left-1/2 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob" style={{ animationDelay: '4000ms' }}></div>
+                <div className="absolute inset-0 bg-slate-900/20"></div>
+            </div>
+
+            <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
+                <div className="mb-8 inline-flex p-6 bg-white rounded-3xl shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 duration-500">
+                    <img src="https://cchc.cl/documents/431409/0/logoCChC.png/002fea99-2039-beec-02a7-a92335532d6f?t=1695346405910" alt="CChC Maule" className="h-16 w-auto object-contain" />
+                </div>
+
+                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-white animate-in animate-duration-500">
+                    Permisos de Edificación Autorizados
+                </h1>
+
+                <p className="text-lg md:text-xl text-white font-light tracking-wide mb-10 animate-in animate-delay-200">
+                    Analisis estadistico/geoespacial de permisos de edificación de obra nueva autorizados.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in animate-delay-300">
+                    <button onClick={onEnter} className="group relative px-8 py-4 bg-white text-blue-900 font-bold rounded-xl shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-hidden">
+                        <span className="relative z-10 uppercase tracking-wider">VER DETALLE</span>
+                        <ArrowRight size={20} className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+
+                    <a href="https://cchc.cl" target="_blank" rel="noopener noreferrer" className="px-6 py-4 text-blue-200 hover:text-white text-sm font-medium transition-colors flex items-center gap-2">
+                        <ExternalLink size={16} />
+                        <span>Sitio Web CChC</span>
+                    </a>
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-in {
+                    animation: fade-in 0.8s ease-out forwards;
+                }
+                .animate-delay-200 { animation-delay: 200ms; }
+                .animate-delay-300 { animation-delay: 300ms; }
+            `}</style>
+
+            <div className="absolute bottom-8 left-0 w-full text-center text-[10px] text-white font-mono z-10 uppercase tracking-widest opacity-50">Cámara Chilena de la Construcción • Sede Maule</div>
+        </div>
+    );
+};
+
 // --- COMPONENTE PRINCIPAL APP ---
 
 export default function App() {
+    const [view, setView] = useState('landing');
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState('analisis');
@@ -1002,10 +1059,15 @@ export default function App() {
         });
     }, [trendContextData, selectedMonths, isSurfaceCumulative, uniqueDestinations]);
 
+    if (view === 'landing') return <LandingPage onEnter={() => setView('dashboard')} />;
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
             <header className="bg-white border-b border-slate-100 px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-[2000] shadow-sm">
                 <div className="flex items-center gap-4">
+                    <button onClick={() => setView('landing')} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400 hover:text-blue-700" title="Volver a la portada">
+                        <ArrowLeft size={20} />
+                    </button>
                     <img src={LOGO_URL} alt="CChC" className="h-8 object-contain" />
                     <h1 className="hidden sm:block text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Monitor de P.E. Autorizados</h1>
                 </div>
